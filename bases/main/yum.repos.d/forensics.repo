@@ -1,0 +1,6 @@
+[forensics]
+name=CentOS Forensics
+baseurl=https://forensics.cert.org/centos/cert/8/x86_64/
+enabled=1
+gpgcheck=0
+

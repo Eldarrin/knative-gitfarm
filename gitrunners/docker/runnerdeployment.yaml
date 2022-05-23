@@ -1,0 +1,28 @@
+apiVersion : actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: BASEBUILD
+spec:
+  template:
+    metadata:
+      labels:
+        app: BASEBUILD
+    spec:
+      organization: eldarrin
+      image: "eldarrin/gitrunners/BASEBUILD:LATESTTAG"
+      dockerEnabled: false
+      imagePullSecrets:
+        - name: eldarrin
+      labels:
+        - docker
+      env:
+        - name: DISABLE_RUNNER_UPDATE
+          value: "true"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: DOCKER_HOST
+          value: tcp://dind-swarm:2375
+        - name: MTU
+          value: "1440"
