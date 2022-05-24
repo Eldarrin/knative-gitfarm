@@ -32,3 +32,13 @@ spec:
               secretKeyRef:
                 name: githubsecret
                 key: webhookSecret
+        - name: DISABLE_RUNNER_UPDATE
+          value: "true"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: DOCKER_HOST
+          value: tcp://dind-swarm:2375
+        - name: MTU
+          value: "1440"
