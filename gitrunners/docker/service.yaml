@@ -14,13 +14,13 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: gitwebhook-docker
+  name: gitwebhook-LABEL
   namespace: default
 spec:
   template:
     spec:
       containers:
-      - image: docker.io/eldarrin/git-docker:latest
+      - image: docker.io/eldarrin/git-LABEL:latest
         env:
         - name: GITHUB_PERSONAL_TOKEN
           valueFrom:
