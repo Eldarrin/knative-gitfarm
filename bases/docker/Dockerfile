@@ -1,5 +1,7 @@
 FROM eldarrin/base-main:LATESTTAG
 
+ENV LABELS=docker
+
 COPY yum.repos.d /etc/yum.repos.d/
 
 COPY daemon.json /etc/docker/daemon.json
