@@ -3,8 +3,8 @@ name: Docker Base Image Build
 on:
   push:
     branches: [ develop ]
-    paths:
-      - /bases/docker/
+#    paths:
+#      - /bases/docker/
 
 env:
   TAG: "latest"
