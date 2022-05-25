@@ -3,8 +3,8 @@ name: Docker Git Image Build
 on:
   push:
     branches: [ develop ]
-#    paths:
-#      - git/
+    paths:
+      - git/
 
 env:
   TAG: "latest"
