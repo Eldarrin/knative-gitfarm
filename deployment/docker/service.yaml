@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - # Replace {DOCKER_HUB_USERNAME} with your actual docker hub username
-        image: docker.io/eldarrin/git-docker:2384038165
+        image: docker.io/eldarrin/git-docker:latest
         env:
         - name: GITHUB_PERSONAL_TOKEN
           valueFrom:

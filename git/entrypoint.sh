@@ -28,9 +28,7 @@ else
   log.debug "Github endpoint URL ${GITHUB_URL}"
 fi
 
-if [ -z "${RUNNER_NAME}" ] && [ -n "${SERVING_POD}" ]; then
-  RUNNER_NAME=${SERVING_POD}
-fi
+RUNNER_NAME=$(cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-20} | head -n 1)
 
 if [ -z "${RUNNER_NAME}" ]; then
   log.error 'RUNNER_NAME must be set'
@@ -52,7 +50,7 @@ else
   exit 1
 fi
 
-if [ -z "${RUNNER_TOKEN}" ] && [ -n "${PERSONALACCESSTOKEN}" ]; then
+if [ -z "${RUNNER_TOKEN}" ] && [ -n "${GITHUB_PERSONAL_TOKEN}" ]; then
   RUNNER_TOKEN=${PERSONALACCESSTOKEN}
 fi
 
