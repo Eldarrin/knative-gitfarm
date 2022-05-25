@@ -1,0 +1,182 @@
+name: Full Image Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  TAG: ${{ github.run_id }}
+
+
+jobs:
+  pre-build:
+    strategy:
+      matrix:
+        runner-name: ["main", "dind-swarm"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the base ${{ matrix.runner-name }} image
+        run: |
+          cd bases/${{ matrix.runner-name }}
+          printenv
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }}
+          
+  primary-build:
+    needs: pre-build
+    strategy:
+      matrix:
+        runner-name: ["buildah", "kube", "docker"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the base ${{ matrix.runner-name }} image
+        run: |
+          cd bases/${{ matrix.runner-name }}
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }}
+          
+  secondary-build:
+    needs: primary-build
+    strategy:
+      matrix:
+        runner-name: ["maven"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the base ${{ matrix.runner-name }} image
+        run: |
+          cd bases/${{ matrix.runner-name }}
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }}
+          
+  ci-bases:
+    needs: pre-build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: create and push manifests
+        run: |
+          cd dind-swarm
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" dind-deployment.yaml
+          # push dind-deployment.yaml somewhere
+          
+  ci-runner:
+    needs: secondary-build
+    strategy:
+      matrix:
+        runner-name:  ["main", "buildah", "kube", "maven", "docker"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the ${{ matrix.runner-name }} image
+        run: |
+          cd gitrunners
+          sed -i "s/BASEBUILD/${{ matrix.runner-name }}/g" Dockerfile
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/gitrunner-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/gitrunner-${{ matrix.runner-name }}:${{ env.TAG }}
+          
+      - name: create and push manifests
+        run: |
+          cd gitrunners
+          mv -f ${{ matrix.runner-name }}/*.yaml k8_manifests || true
+          cd k8_manifests
+          sed -i "s/BASEBUILD/${{ matrix.runner-name }}/g" runnerdeployment.yaml
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" runnerdeployment.yaml
+          sed -i "s/BASEBUILD/${{ matrix.runner-name }}/g" hra.yaml
+          mv runnerdeployment.yaml ${{ matrix.runner-name }}-runnerdeployment.yaml
+          mv hra.yaml ${{ matrix.runner-name }}-hra.yaml
+          # push *.yaml somewhere
+          
+  deploy-runner:
+    needs: ci-runner
+    strategy:
+      matrix:
+        runner-name:  ["main", "buildah", "maven", "docker"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: download the ${{ matrix.runner-name }} manifests
+        run: |
+          # download yamls
+      - uses: azure/k8s-set-context@v2
+        with:
+          method: service-account
+          k8s-url: https://1.1.1.1:6443
+          k8s-secret: ${{ secrets.K8_SECRET }}
+
+      - name: manual apply k8s
+        run: |
+          kubectl apply -f ${{ matrix.runner-name }}-runnerdeployment.yaml -n gitfarm
+          kubectl apply -f ${{ matrix.runner-name }}-hra.yaml -n gitfarm
+          
+  deploy-bases:
+    needs: deploy-runner
+    strategy:
+      matrix:
+        runner-name:  ["dind-swarm"]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: download the ${{ matrix.runner-name }} manifests
+        run: |
+          # download dind-swarm yamls
+      - uses: azure/k8s-set-context@v2
+        with:
+          method: service-account
+          k8s-url: https://1.1.1.1:6443
+          k8s-secret: ${{ secrets.K8_SECRET }}
+
+      - name: remove old bases
+        run: |
+          kubectl delete deployment dind-swarm -n gitfarm || true
+      - name: manual apply k8s
+        run: |
+          kubectl apply -f dind-deployment.yaml -n gitfarm
+          kubectl apply -f dind-service.yaml -n gitfarm
+          
+  deploy-kube-runner:
+    needs: deploy-bases
+    strategy:
+      matrix:
+        runner-name:  ["kube"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: download the ${{ matrix.runner-name }} manifests
+        run: |
+          # download the kube agent yamls
+      - uses: azure/k8s-set-context@v2
+        with:
+          method: service-account
+          k8s-url: https://1.1.1.1:6443
+          k8s-secret: ${{ secrets.K8_SECRET }}
+
+      - name: manual apply k8s
+        run: |
+          kubectl apply -f ${{ matrix.runner-name }}-runnerdeployment.yaml -n gitfarm
+          kubectl apply -f ${{ matrix.runner-name }}-hra.yaml -n gitfarm
