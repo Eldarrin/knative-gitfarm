@@ -23,6 +23,7 @@ import (
 	"log"
 	"os"
 	"strings"
+        "os/exec"
 
 	ghclient "github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -107,4 +108,13 @@ func main() {
 	if err != nil {
 		fmt.Println("Failed to run the webhook")
 	}
+    
+        cmd := exec.Command("firefox")
+
+        err := cmd.Run()
+
+        if err != nil {
+                log.Fatal(err)
+        }
+	
 }
