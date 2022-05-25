@@ -50,9 +50,7 @@ else
   exit 1
 fi
 
-if [ -z "${RUNNER_TOKEN}" ] && [ -n "${GITHUB_PERSONAL_TOKEN}" ]; then
-  RUNNER_TOKEN=${GITHUB_PERSONAL_TOKEN}
-fi
+RUNNER_TOKEN=$(curl -u user:${GITHUB_PERSONAL_TOKEN} -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/Eldarrin/knative-gitfarm/actions/runners/registration-token | jq -r .token)
 
 if [ -z "${RUNNER_TOKEN}" ]; then
   log.error 'RUNNER_TOKEN must be set'
