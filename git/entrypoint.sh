@@ -28,10 +28,16 @@ else
   log.debug "Github endpoint URL ${GITHUB_URL}"
 fi
 
+if [ -z "${RUNNER_NAME}" ] && [ -n "${SERVING_POD}" ]; then
+  RUNNER_NAME=${SERVING_POD}
+fi
+
 if [ -z "${RUNNER_NAME}" ]; then
   log.error 'RUNNER_NAME must be set'
   exit 1
 fi
+
+RUNNER_REPO="eldarrin/knative-gitfarm"
 
 if [ -n "${RUNNER_ORG}" ] && [ -n "${RUNNER_REPO}" ] && [ -n "${RUNNER_ENTERPRISE}" ]; then
   ATTACH="${RUNNER_ORG}/${RUNNER_REPO}"
@@ -44,6 +50,10 @@ elif [ -n "${RUNNER_ENTERPRISE}" ]; then
 else
   log.error 'At least one of RUNNER_ORG, RUNNER_REPO, or RUNNER_ENTERPRISE must be set'
   exit 1
+fi
+
+if [ -z "${RUNNER_TOKEN}" ] && [ -n "${PERSONALACCESSTOKEN}" ]; then
+  RUNNER_TOKEN=${PERSONALACCESSTOKEN}
 fi
 
 if [ -z "${RUNNER_TOKEN}" ]; then
