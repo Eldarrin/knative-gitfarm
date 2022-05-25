@@ -25,7 +25,8 @@ RUN ln -s /bin/microdnf /bin/yum || true && \
 COPY entrypoint.sh logger.bash /usr/bin/
 
 RUN chmod +x /usr/bin/entrypoint.sh && \
-    chmod +x /usr/bin/logger.bash
+    chmod +x /usr/bin/logger.bash && \
+    chmod 777 /runner/
 
 USER runner
 
