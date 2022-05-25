@@ -1,6 +1,6 @@
 FROM eldarrin/base-docker:LATESTTAG
 
-ARG javaVer=11.0.15.0.9-2.el8_5
+ARG javaVer=11.0.15.0.10-2.el8_6
 
 ENV JAVA_HOME_11_X64=/usr/lib/jvm/java-11-openjdk-$javaVer.x86_64 \
     JAVA_HOME=/usr/lib/jvm/java-11-openjdk-$javaVer.x86_64
