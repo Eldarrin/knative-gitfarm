@@ -53,21 +53,22 @@ func (handler *GithubHandler) HandleWorkflowJob(payload interface{}, header webh
 	
 	pl := payload.(github.wflowjonPayload)
 	
-	url_suffix := pl.repository.fullname
+	url_suffix := "/" + pl.repository.fullname
 	
-	if pl.workflowjob.url = "api.github.com" then
+	if pl.workflowjob.url == "api.github.com" {
 	  github_url := "https://github.com/"
-    end if 
+    }
     
-    if pl.organisation then
+    if pl.organisation {
       github_url + organisation
-    end if 
+    }
 	
+	# clear and mash up labels
 	runner_labels := "docker"
 	
-	work_dir := "/runner/"
+	work_dir := "/runner"
 	
-    runner_name := rand.String(8)
+    runner_name := runner_labels + "-" + rand.String(8)
     
 	configApp := "config.sh"
 	
