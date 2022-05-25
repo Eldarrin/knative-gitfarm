@@ -64,10 +64,10 @@ if [ -z "${RUNNER_REPO}" ] && [ -n "${RUNNER_GROUP}" ];then
 fi
 
 # Hack due to https://github.com/actions-runner-controller/actions-runner-controller/issues/252#issuecomment-758338483
-if [ ! -d "${RUNNER_HOME}" ]; then
-  log.error "$RUNNER_HOME should be an emptyDir mount. Please fix the pod spec."
-  exit 1
-fi
+#if [ ! -d "${RUNNER_HOME}" ]; then
+#  log.error "$RUNNER_HOME should be an emptyDir mount. Please fix the pod spec."
+#  exit 1
+#fi
 
 # if this is not a testing environment
 if [[ "${UNITTEST:-}" == '' ]]; then
