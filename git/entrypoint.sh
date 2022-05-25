@@ -35,7 +35,7 @@ if [ -z "${RUNNER_NAME}" ]; then
   exit 1
 fi
 
-RUNNER_REPO="eldarrin/knative-gitfarm"
+RUNNER_REPO="knative-gitfarm"
 
 if [ -n "${RUNNER_ORG}" ] && [ -n "${RUNNER_REPO}" ] && [ -n "${RUNNER_ENTERPRISE}" ]; then
   ATTACH="${RUNNER_ORG}/${RUNNER_REPO}"
