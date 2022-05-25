@@ -7,7 +7,7 @@ ENV HOME=/home/runner
 ENV RUNNER_ASSETS_DIR=/runnertmp
 ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 
-#WORKDIR /actions-runner
+WORKDIR /runner
 
 RUN ln -s /bin/microdnf /bin/yum || true && \
     mkdir -p "$RUNNER_ASSETS_DIR" \
