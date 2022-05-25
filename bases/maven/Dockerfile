@@ -1,4 +1,4 @@
-FROM base-docker:LATESTTAG
+FROM eldarrin/base-docker:LATESTTAG
 
 ARG javaVer=11.0.15.0.9-2.el8_5
 
