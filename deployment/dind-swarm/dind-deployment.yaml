@@ -14,11 +14,9 @@ spec:
       labels:
         app: dind-swarm
     spec:
-      imagePullSecrets:
-        - name: eldarrin
       containers:
         - name: dind
-          image: "eldarrin/bases/dind-swarm:LATESTTAG"
+          image: "eldarrin/base-dind-swarm:LATESTTAG"
           imagePullPolicy: Always
           securityContext:
             privileged: true

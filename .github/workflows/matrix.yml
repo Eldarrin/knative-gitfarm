@@ -63,21 +63,7 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
           docker build -t eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }} .
           docker push eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }}
-          
-  ci-bases:
-    needs: pre-build
 
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: create and push manifests
-        run: |
-          cd dind-swarm
-          sed -i "s/LATESTTAG/${{ env.TAG }}/g" dind-deployment.yaml
-          # push dind-deployment.yaml somewhere
-          
   ci-runner:
     needs: secondary-build
     strategy:
@@ -96,3 +82,17 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
           docker build -t eldarrin/git-${{ matrix.runner-name }}:${{ env.TAG }} .
           docker push eldarrin/git-${{ matrix.runner-name }}:${{ env.TAG }}
+
+  publish-dind-swarm:
+    needs: ci-runner
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: create and push manifests
+        run: |
+          cd deployment/dind-swarm
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" dind-deployment.yaml
+          # push dind-deployment.yaml somewhere
