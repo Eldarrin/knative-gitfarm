@@ -109,13 +109,19 @@ func main() {
 		fmt.Println("Failed to run the webhook")
 	}
     
-	    prg := "echo"
+    RUNNER_NAME=$(cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-20} | head -n 1)
+    
+	configApp := "config.sh"
 
-    arg1 := "there"
-    arg2 := "are three"
-    arg3 := "falcons"
+    nameArg := "--name " + runner_name
+    urlArg := "--url " + github_url + url_suffix
+    tokenArg := "--token " + runner_token
+    runnerGroupArg := "--runnergroup " + runner_group
+    labelsArg := "--labels " + runner_labels
+    workDirArd := "--work " + work_dir
 
-    cmd := exec.Command(prg, arg1, arg2, arg3)
+    cmd := exec.Command(configApp, "--unattended", "--replace", nameArg, urlArg, tokenArg, runnerGroupArg, labelsArg, workDirArg)
+    
     stdout, err := cmd.Output()
 
     if err != nil {
