@@ -9,14 +9,14 @@ ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 
 WORKDIR /runner
 
-RUN ln -s /bin/microdnf /bin/yum || true && \
-    mkdir -p "$RUNNER_ASSETS_DIR" \
+RUN ln -s /bin/microdnf /bin/yum || true \
+    && mkdir -p "$RUNNER_ASSETS_DIR" \
     && cd "$RUNNER_ASSETS_DIR" \
     && curl -f -L -o runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
     && tar xzf ./runner.tar.gz \
     && rm runner.tar.gz \
-    && ./bin/installdependencies.sh && \
-    adduser runner \
+    && ./bin/installdependencies.sh \
+    && adduser runner \
     && curl -f -L -o /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_x86_64 \
     && chmod +x /usr/local/bin/dumb-init \
     && mkdir /opt/hostedtoolcache \
@@ -24,11 +24,10 @@ RUN ln -s /bin/microdnf /bin/yum || true && \
 
 COPY entrypoint.sh logger.bash /usr/bin/
 
-RUN chmod +x /usr/bin/entrypoint.sh && \
-    chmod +x /usr/bin/logger.bash && \
-    chmod 777 /runner/
+RUN chmod +x /usr/bin/entrypoint.sh \
+    && chmod +x /usr/bin/logger.bash \
+    && chown -R runner:docker "$RUNNER_HOME"
 
 USER runner
 
 ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
-CMD ["entrypoint.sh"]
