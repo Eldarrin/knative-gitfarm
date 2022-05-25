@@ -51,7 +51,7 @@ else
 fi
 
 if [ -z "${RUNNER_TOKEN}" ] && [ -n "${GITHUB_PERSONAL_TOKEN}" ]; then
-  RUNNER_TOKEN=${PERSONALACCESSTOKEN}
+  RUNNER_TOKEN=${GITHUB_PERSONAL_TOKEN}
 fi
 
 if [ -z "${RUNNER_TOKEN}" ]; then
