@@ -109,12 +109,20 @@ func main() {
 		fmt.Println("Failed to run the webhook")
 	}
     
-        cmd := exec.Command("firefox")
+	    prg := "echo"
 
-        err := cmd.Run()
+    arg1 := "there"
+    arg2 := "are three"
+    arg3 := "falcons"
 
-        if err != nil {
-                log.Fatal(err)
-        }
+    cmd := exec.Command(prg, arg1, arg2, arg3)
+    stdout, err := cmd.Output()
+
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    fmt.Print(string(stdout))
 	
 }
