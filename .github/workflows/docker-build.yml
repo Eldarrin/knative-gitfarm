@@ -1,0 +1,47 @@
+name: Docker Base Image Build
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - /bases/docker/
+
+env:
+  TAG: "latest"
+
+jobs:
+  primary-build:
+    strategy:
+      matrix:
+        runner-name: ["docker"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the base ${{ matrix.runner-name }} image
+        run: |
+          cd bases/${{ matrix.runner-name }}
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/base-${{ matrix.runner-name }}:${{ env.TAG }}
+
+  ci-runner:
+    needs: primary-build
+    strategy:
+      matrix:
+        runner-name:  ["docker"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the ${{ matrix.runner-name }} image
+        run: |
+          cd git
+          sed -i "s/BASEBUILD/${{ matrix.runner-name }}/g" Dockerfile
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/git-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/git-${{ matrix.runner-name }}:${{ env.TAG }}
