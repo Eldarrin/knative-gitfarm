@@ -16,8 +16,6 @@ RUN ln -s /bin/microdnf /bin/yum || true && \
     && tar xzf ./runner.tar.gz \
     && rm runner.tar.gz \
     && ./bin/installdependencies.sh && \
-    chmod +x /usr/bin/entrypoint.sh && \
-    chmod +x /usr/bin/logger.bash && \
     adduser runner \
     && curl -f -L -o /usr/local/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v${DUMB_INIT_VERSION}/dumb-init_${DUMB_INIT_VERSION}_x86_64 \
     && chmod +x /usr/local/bin/dumb-init \
@@ -25,6 +23,9 @@ RUN ln -s /bin/microdnf /bin/yum || true && \
     && chmod g+rwx /opt/hostedtoolcache
 
 COPY entrypoint.sh logger.bash /usr/bin/
+
+RUN chmod +x /usr/bin/entrypoint.sh && \
+    chmod +x /usr/bin/logger.bash
 
 USER runner
 
