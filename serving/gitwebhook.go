@@ -24,6 +24,7 @@ import (
 	"os"
 	"strings"
         "os/exec"
+        "rand"
 
 	ghclient "github.com/google/go-github/github"
 	"golang.org/x/oauth2"
@@ -46,6 +47,62 @@ type GithubHandler struct {
 	client *ghclient.Client
 	ctx    context.Context
 }
+
+func (handler *GithubHandler) HandleWorkflowJob(payload interface{}, header webhooks.Header) {
+	log.Print("Handling Workflow Job")
+	
+	pl := payload.(github.wflowjonPayload)
+	
+	url_suffix := pl.repository.fullname
+	
+	if pl.workflowjob.url = "api.github.com" then
+	  github_url := "https://github.com/"
+    end if 
+    
+    if pl.organisation then
+      github_url + organisation
+    end if 
+	
+	runner_labels := "docker"
+	
+	work_dir := "/runner/"
+	
+    runner_name := rand.String(8)
+    
+	configApp := "config.sh"
+	
+	RUNNER_TOKEN=$(curl -u user:${GITHUB_PERSONAL_TOKEN} -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/Eldarrin/knative-gitfarm/actions/runners/registration-token | jq -r .token)
+
+    nameArg := "--name " + runner_name
+    urlArg := "--url " + github_url + url_suffix
+    tokenArg := "--token " + runner_token
+    runnerGroupArg := "--runnergroup " + runner_group
+    labelsArg := "--labels " + runner_labels
+    workDirArd := "--work " + work_dir
+
+    cmd := exec.Command(configApp, "--unattended", "--replace", nameArg, urlArg, tokenArg, runnerGroupArg, labelsArg, workDirArg, "--ephemeral", "--disableupdate")
+    
+    stdout, err := cmd.Output()
+
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    fmt.Print(string(stdout))
+    
+    cmdRun := exec.Command("run.sh")
+    
+    stdout, err := cmdRun.Output()
+
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    fmt.Print(string(stdout))
+    
+}	
 
 // HandlePullRequest is invoked whenever a PullRequest is modified (created, updated, etc.)
 func (handler *GithubHandler) HandlePullRequest(payload interface{}, header webhooks.Header) {
@@ -103,32 +160,11 @@ func main() {
 
 	hook := github.New(&github.Config{Secret: secretToken})
 	hook.RegisterEvents(h.HandlePullRequest, github.PullRequestEvent)
+	hook.RegisterEvents(h.HandleWorkflowJob, github.xxx)
 
 	err := webhooks.Run(hook, ":8080", "/")
 	if err != nil {
 		fmt.Println("Failed to run the webhook")
 	}
-    
-    RUNNER_NAME=$(cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-20} | head -n 1)
-    
-	configApp := "config.sh"
 
-    nameArg := "--name " + runner_name
-    urlArg := "--url " + github_url + url_suffix
-    tokenArg := "--token " + runner_token
-    runnerGroupArg := "--runnergroup " + runner_group
-    labelsArg := "--labels " + runner_labels
-    workDirArd := "--work " + work_dir
-
-    cmd := exec.Command(configApp, "--unattended", "--replace", nameArg, urlArg, tokenArg, runnerGroupArg, labelsArg, workDirArg)
-    
-    stdout, err := cmd.Output()
-
-    if err != nil {
-        fmt.Println(err.Error())
-        return
-    }
-
-    fmt.Print(string(stdout))
-	
 }
