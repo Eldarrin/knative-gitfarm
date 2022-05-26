@@ -22,13 +22,23 @@ const (
 	webhookSecretKey = "WEBHOOK_SECRET"
 )
 
-func HandleWorkflowJob(payload github.WorkflowJobPayload) {
+type JobInfo struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	CallingURL  string `json:"calling_url"`
+	Labels      string `json:"labels"`
+	RepoName    string `json:"repo_name"`
+	RunnerGroup string `json:"runner_group"`
+	Owner       string `json:"owner"`
+}
+
+func HandleWorkflowJob(info JobInfo) {
 	log.Print("Handling Workflow Job")
 
-	githubUrl := "https://github.com/" + payload.Repository.FullName
+	githubUrl := "https://github.com/" + info.Owner + "/" + info.Name
 
 	// do enterprise stuff
-	if !strings.Contains(payload.WorkflowJob.URL, "api.github.com") {
+	if !strings.Contains(info.CallingURL, "api.github.com") {
 		githubUrl = "this will break"
 	}
 
@@ -38,10 +48,11 @@ func HandleWorkflowJob(payload github.WorkflowJobPayload) {
 	//}
 
 	// do runner groups stuff
-	runnerGroup := ""
+	runnerGroup := info.RunnerGroup
 
 	// clear and mash up labels
-	labels := "docker"
+	// strip non-essentials
+	labels := info.Labels
 
 	workDir := "/runner"
 
@@ -109,6 +120,7 @@ func main() {
 
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		log.Print("in handle")
+
 		payload, err := hook.Parse(r, github.WorkflowJobEvent, github.ReleaseEvent, github.PullRequestEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
