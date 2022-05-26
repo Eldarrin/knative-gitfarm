@@ -10,7 +10,7 @@ ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 
 WORKDIR /runner
 
-RUN ln -s /bin/microdnf /bin/yum || true \
+RUN dnf install -y golang \
     && mkdir -p "$RUNNER_ASSETS_DIR" \
     && cd "$RUNNER_ASSETS_DIR" \
     && curl -f -L -o runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
@@ -23,12 +23,19 @@ RUN ln -s /bin/microdnf /bin/yum || true \
     && mkdir /opt/hostedtoolcache \
     && chmod g+rwx /opt/hostedtoolcache
 
-COPY entrypoint.sh logger.bash /usr/bin/
+EXPOSE 8080
 
-RUN chmod +x /usr/bin/entrypoint.sh \
-    && chmod +x /usr/bin/logger.bash \
-    && chown -R runner:docker "$RUNNER_HOME"
+RUN chown -R runner:docker "$RUNNER_HOME"
 
 USER runner
 
-ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
+COPY go.mod go.sum webhook.go rand-strings.go ./
+
+RUN	go get github.com/go-playground/webhooks/v6
+RUN	go get github.com/google/go-github/v45
+RUN	go get golang.org/x/oauth2
+
+# build the sample
+RUN CGO_ENABLED=0 go build -o webhook .
+
+ENTRYPOINT ["/runner/webhook"]
