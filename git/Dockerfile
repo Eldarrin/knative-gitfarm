@@ -35,7 +35,6 @@ RUN	go get github.com/go-playground/webhooks/v6
 RUN	go get github.com/google/go-github/v45
 RUN	go get golang.org/x/oauth2
 
-# build the sample
 RUN CGO_ENABLED=0 go build -o webhook .
 
 ENTRYPOINT ["/runner/webhook"]
