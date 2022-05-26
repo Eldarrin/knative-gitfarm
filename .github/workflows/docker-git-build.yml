@@ -1,0 +1,29 @@
+name: Docker Git Image Build
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'git/*'
+
+env:
+  TAG: "latest"
+
+jobs:
+  ci-runner:
+    strategy:
+      matrix:
+        runner-name:  ["docker"]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: build and push the ${{ matrix.runner-name }} image
+        run: |
+          cd git
+          sed -i "s/BASEBUILD/${{ matrix.runner-name }}/g" Dockerfile
+          sed -i "s/LATESTTAG/${{ env.TAG }}/g" Dockerfile
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+          docker build -t eldarrin/git-${{ matrix.runner-name }}:${{ env.TAG }} .
+          docker push eldarrin/git-${{ matrix.runner-name }}:${{ env.TAG }}

@@ -14,13 +14,16 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: gitwebhook-LABEL
+  name: gitwebhook-docker
   namespace: default
 spec:
   template:
     spec:
       containers:
-      - image: docker.io/eldarrin/git-LABEL:latest
+      - # Replace {DOCKER_HUB_USERNAME} with your actual docker hub username
+        image: docker.io/eldarrin/git-docker:latest
+        ports:
+          - containerPort: 8080
         env:
         - name: GITHUB_PERSONAL_TOKEN
           valueFrom:
@@ -32,13 +35,3 @@ spec:
               secretKeyRef:
                 name: githubsecret
                 key: webhookSecret
-        - name: DISABLE_RUNNER_UPDATE
-          value: "true"
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: DOCKER_HOST
-          value: tcp://dind-swarm:2375
-        - name: MTU
-          value: "1440"
