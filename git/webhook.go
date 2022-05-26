@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"github.com/go-playground/webhooks/v6/github"
 	ghclient "github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
@@ -109,6 +108,7 @@ func main() {
 	hook, _ := github.New(github.Options.Secret(secretToken))
 
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		log.Print("in handle")
 		payload, err := hook.Parse(r, github.WorkflowJobEvent, github.ReleaseEvent, github.PullRequestEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
@@ -125,12 +125,12 @@ func main() {
 		case github.ReleasePayload:
 			release := payload.(github.ReleasePayload)
 			// Do whatever you want from here...
-			fmt.Printf("%+v", release)
+			log.Print("%+v", release)
 
 		case github.PullRequestPayload:
 			pullRequest := payload.(github.PullRequestPayload)
 			// Do whatever you want from here...
-			fmt.Printf("%+v", pullRequest)
+			log.Print("%+v", pullRequest)
 		}
 	})
 	err := http.ListenAndServe(":8080", nil)
