@@ -50,4 +50,8 @@ buildah run $microcontainer CGO_ENABLED=0 go build -o webhook .
 
 buildah config --entrypoint /runner/webhook $microcontainer
 
+buildah unmount $microcontainer
+
 buildah commit $microcontainer git-main
+
+buildah rm $microcontainer
