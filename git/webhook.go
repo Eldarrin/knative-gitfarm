@@ -48,7 +48,7 @@ func HandleWorkflowJob(jobInfo *JobInfo) {
 	//}
 
 	// do runner groups stuff
-	runnerGroup := jobInfo.RunnerGroup
+	//runnerGroup := jobInfo.RunnerGroup
 
 	// clear and mash up labels
 	// strip non-essentials
@@ -78,31 +78,38 @@ func HandleWorkflowJob(jobInfo *JobInfo) {
 
 	runnerTokenValue := *runnerToken.Token
 
-	runnerName = "--name " + runnerName
-	githubUrl = "--url " + githubUrl
-	runnerTokenValue = "--token " + runnerTokenValue
-	if runnerGroup != "" {
-		runnerGroup = "--runnergroup " + runnerGroup
-	}
-	labels = "--labels " + labels
-	workDir = "--work " + workDir
-
-	cmd := exec.Command(configApp, "--unattended", "--replace", runnerName, githubUrl, runnerTokenValue, runnerGroup, labels, workDir, "--ephemeral", "--disableupdate")
-
-	stdout, err := cmd.Output()
-
-	if err != nil {
-		log.Print(err.Error())
-		return
+	cmdConfig := &exec.Cmd{
+		Path:   configApp,
+		Args:   []string{configApp, "--unattended", "--replace", "--name", runnerName, "--url", githubUrl, "--token", runnerTokenValue, "--labels", labels, "--work", workDir, "--ephemeral", "--disableupdate"},
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 
-	log.Print(string(stdout))
+	log.Print(cmdConfig.String())
 
+	if err := cmdConfig.Run(); err != nil {
+		log.Print(err)
+	}
+	/*
+		cmd := exec.Command(configApp, "--unattended", "--replace", runnerName, githubUrl, runnerTokenValue, runnerGroup, labels, workDir, "--ephemeral", "--disableupdate")
+
+		stdout, err := cmd.Output()
+		log.Print(string(stdout))
+
+		if err != nil {
+			log.Print("in error config")
+			log.Print(err.Error())
+			return
+		}
+
+		log.Print(string(stdout))
+	*/
 	cmdRun := exec.Command(workDir + "/run.sh")
 
-	stdout, err = cmdRun.Output()
+	stdout, err := cmdRun.Output()
 
 	if err != nil {
+		log.Print("in error run")
 		log.Print(err.Error())
 		return
 	}

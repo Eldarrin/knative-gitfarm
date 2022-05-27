@@ -1,0 +1,21 @@
+name: Test Runner
+
+on:
+  push:
+    branches: [ develop ]
+
+env:
+  TAG: "latest"
+
+jobs:
+  ci-runner:
+    strategy:
+      matrix:
+        runner-name:  ["main"]
+
+    runs-on: "main"
+
+    steps:
+      - name: echoer
+        run: |
+          echo I am a thing
