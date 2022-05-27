@@ -1,4 +1,4 @@
-package main
+package runnercontrol
 
 import (
 	"context"
@@ -22,6 +22,7 @@ const (
 )
 
 type JobInfo struct {
+
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	CallingURL  string `json:"calling_url"`

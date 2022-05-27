@@ -1,4 +1,4 @@
-package main
+package randstring
 
 //thanks calhoun.io for snippet
 

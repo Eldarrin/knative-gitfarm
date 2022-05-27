@@ -1,4 +1,4 @@
-module eldarrin/webhook
+module eldarrin/knative-gitfarm
 
 go 1.17
 
