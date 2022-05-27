@@ -14,7 +14,7 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: git-LABEL
+  name: git-main
   namespace: default
 spec:
   template:
@@ -29,7 +29,7 @@ spec:
           # Limit scaling to 100 pods.
           autoscaling.knative.dev/max-scale: "100"
       containers:
-      - image: docker.io/eldarrin/git-LABEL:latest
+      - image: docker.io/eldarrin/git-main:latest
         env:
         - name: GITHUB_PERSONAL_TOKEN
           valueFrom:

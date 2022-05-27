@@ -37,7 +37,7 @@ RUN dnf install -y golang \
 
 EXPOSE 8080
 
-RUN chown -R runner:docker "$RUNNER_HOME"
+RUN chown -R runner:runner "$RUNNER_HOME"
 
 USER runner
 

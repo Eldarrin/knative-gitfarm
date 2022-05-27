@@ -32,13 +32,13 @@ type JobInfo struct {
 	Owner       string `json:"owner"`
 }
 
-func HandleWorkflowJob(info JobInfo) {
+func HandleWorkflowJob(jobInfo *JobInfo) {
 	log.Print("Handling Workflow Job")
 
-	githubUrl := "https://github.com/" + info.Owner + "/" + info.Name
+	githubUrl := "https://github.com/" + jobInfo.Owner + "/" + jobInfo.Name
 
 	// do enterprise stuff
-	if !strings.Contains(info.CallingURL, "api.github.com") {
+	if !strings.Contains(jobInfo.CallingURL, "api.github.com") {
 		githubUrl = "this will break"
 	}
 
@@ -48,17 +48,17 @@ func HandleWorkflowJob(info JobInfo) {
 	//}
 
 	// do runner groups stuff
-	runnerGroup := info.RunnerGroup
+	runnerGroup := jobInfo.RunnerGroup
 
 	// clear and mash up labels
 	// strip non-essentials
-	labels := info.Labels
+	labels := jobInfo.Labels
 
 	workDir := "/runner"
 
 	runnerName := labels + "-" + RandString(8)
 
-	configApp := "config.sh"
+	configApp := workDir + "/config.sh"
 
 	flag.Parse()
 	personalAccessToken := os.Getenv(personalAccessTokenKey)
@@ -71,7 +71,7 @@ func HandleWorkflowJob(info JobInfo) {
 	tc := oauth2.NewClient(ctx, ts)
 	client := ghclient.NewClient(tc)
 
-	runnerToken, _, err := client.Actions.CreateRegistrationToken(ctx, "eldarrin", "knative-gitfarm")
+	runnerToken, _, err := client.Actions.CreateRegistrationToken(ctx, jobInfo.Owner, jobInfo.RepoName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,7 +98,7 @@ func HandleWorkflowJob(info JobInfo) {
 
 	log.Print(string(stdout))
 
-	cmdRun := exec.Command("run.sh")
+	cmdRun := exec.Command(workDir + "/run.sh")
 
 	stdout, err = cmdRun.Output()
 
@@ -111,6 +111,16 @@ func HandleWorkflowJob(info JobInfo) {
 
 }
 
+func newJob(name string) *JobInfo {
+	j := JobInfo{Name: name}
+	j.ID = 1
+	j.Labels = "main"
+	j.CallingURL = "https://api.github.com"
+	j.Owner = "eldarrin"
+	j.RepoName = "knative-gitfarm"
+	return &j
+}
+
 func main() {
 	flag.Parse()
 	log.Print("gitwebhook sample started.")
@@ -121,6 +131,7 @@ func main() {
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		log.Print("in handle")
 
+		HandleWorkflowJob(newJob("knative-gitfarm"))
 		payload, err := hook.Parse(r, github.WorkflowJobEvent, github.ReleaseEvent, github.PullRequestEvent)
 		if err != nil {
 			if err == github.ErrEventNotFound {
@@ -132,7 +143,7 @@ func main() {
 
 		case github.WorkflowJobPayload:
 			job := payload.(github.WorkflowJobPayload)
-			HandleWorkflowJob(job)
+			log.Print("%+v", job)
 
 		case github.ReleasePayload:
 			release := payload.(github.ReleasePayload)
