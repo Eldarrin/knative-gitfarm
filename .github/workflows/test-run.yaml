@@ -14,9 +14,11 @@ jobs:
       matrix:
         runner-name:  ["main"]
 
-    runs-on: "main"
+    runs-on: "ubuntu-latest"
 
     steps:
       - name: echoer
         run: |
           echo I am a thing
+          chmod +x git/buildah.sh
+          git/buildah.sh

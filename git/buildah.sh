@@ -1,6 +1,6 @@
 #!/bin/bash
 buildah unshare
-microcontainer=$(buildah from registry.access.redhat.com/ubi8/ubi-micro:8.6-285)
+microcontainer=$(buildah from registry.access.redhat.com/ubi8/ubi-micro:8.6)
 micromount=$(buildah mount $microcontainer)
 dnf install \
     --installroot $micromount \
@@ -39,16 +39,15 @@ buildah run $microcontainer mkdir /opt/hostedtoolcache
 buildah run $microcontainer chmod g+rwx /opt/hostedtoolcache
 buildah config --port 8080 $microcontainer
 
+go get github.com/go-playground/webhooks/v6
+go get github.com/google/go-github/v45
+go get golang.org/x/oauth2
+
+CGO_ENABLED=0 go build -o webhook .
+cp webhook $micromount/runner/webhook
+
 buildah run $microcontainer chown -R runner:runner 
 buildsh config --user runner $microcontainer
-
-buildah copy $microcontainer go.mod go.sum webhook.go rand-strings.go ./
-
-buildah run $microcontainer	go get github.com/go-playground/webhooks/v6
-buildah run $microcontainer	go get github.com/google/go-github/v45
-buildah run $microcontainer	go get golang.org/x/oauth2
-
-buildah run $microcontainer CGO_ENABLED=0 go build -o webhook .
 
 buildah config --entrypoint /runner/webhook $microcontainer
 
