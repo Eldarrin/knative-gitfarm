@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 )
 
 const (
@@ -32,8 +31,11 @@ type JobInfo struct {
 	Owner       string `json:"owner"`
 }
 
+var available = true
+
 func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) {
 	log.Print("Handling Workflow Job")
+	log.Print(ch)
 
 	githubUrl := "https://github.com/" + jobInfo.Owner + "/" + jobInfo.Name
 
@@ -106,14 +108,15 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 		Stderr: os.Stderr,
 	}
 
+	log.Print(ch)
 	log.Print(cmdRun.String())
 
 	if err := cmdRun.Run(); err != nil {
 		log.Print(err)
 	}
+	log.Print(ch)
+	available = true
 
-	log.Print("my process finished")
-	close(ch)
 }
 
 func newJob(name string) *JobInfo {
@@ -128,29 +131,22 @@ func newJob(name string) *JobInfo {
 
 func handler(w http.ResponseWriter, _ *http.Request) {
 	log.Print("in handler")
-	notifier, ok := w.(http.CloseNotifier)
-	if !ok {
-		panic("Expected http.ResponseWriter to be an http.CloseNotifier")
-	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := context.Context(context.Background())
 
 	ch := make(chan string)
 
-	go HandleWorkflowJob(ctx, newJob("knative-gitfarm"), ch)
+	if available {
+		available = false
+		w.WriteHeader(200)
+		w.Write([]byte("Got the request and am spinning up"))
 
-	select {
-	case result := <-ch:
-		log.Print(w, result)
-		cancel()
-		return
-	case <-time.After(time.Second * 10):
-		log.Print(w, "Server is busy.")
-	case <-notifier.CloseNotify():
-		log.Print("Client has disconnected.")
+		go HandleWorkflowJob(ctx, newJob("knative-gitfarm"), ch)
+	} else {
+		w.WriteHeader(503)
+		w.Write([]byte("Server is active, send it somewhere else"))
 	}
-	cancel()
-	<-ch
+
 }
 
 func main() {
