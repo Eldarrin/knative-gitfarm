@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/go-playground/webhooks/v6/github"
 	ghclient "github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
 	"log"
@@ -13,7 +14,7 @@ import (
 )
 
 const (
-	path = "/jobs"
+	path = "/webhooks"
 	// Secret given to github. Used for verifying the incoming objects.
 	personalAccessTokenKey = "GITHUB_PERSONAL_TOKEN"
 	// Personal Access Token created in github that allows us to make
@@ -31,11 +32,8 @@ type JobInfo struct {
 	Owner       string `json:"owner"`
 }
 
-var available = true
-
-func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) {
+func HandleWorkflowJob(jobInfo *JobInfo) {
 	log.Print("Handling Workflow Job")
-	log.Print(ch)
 
 	githubUrl := "https://github.com/" + jobInfo.Owner + "/" + jobInfo.Name
 
@@ -68,6 +66,7 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 		log.Fatal("Unauthorized: No token present")
 	}
 
+	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: personalAccessToken})
 	tc := oauth2.NewClient(ctx, ts)
 	client := ghclient.NewClient(tc)
@@ -80,17 +79,8 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 	runnerTokenValue := *runnerToken.Token
 
 	cmdConfig := &exec.Cmd{
-		Path: configApp,
-		Args: []string{configApp,
-			"--unattended",
-			"--replace",
-			"--name", runnerName,
-			"--url", githubUrl,
-			"--token", runnerTokenValue,
-			"--labels", labels,
-			"--work", workDir,
-			"--ephemeral",
-			"--disableupdate"},
+		Path:   configApp,
+		Args:   []string{configApp, "--unattended", "--replace", "--name", runnerName, "--url", githubUrl, "--token", runnerTokenValue, "--labels", labels, "--work", workDir, "--ephemeral", "--disableupdate"},
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
@@ -108,14 +98,11 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 		Stderr: os.Stderr,
 	}
 
-	log.Print(ch)
 	log.Print(cmdRun.String())
 
 	if err := cmdRun.Run(); err != nil {
 		log.Print(err)
 	}
-	log.Print(ch)
-	available = true
 
 }
 
@@ -129,32 +116,41 @@ func newJob(name string) *JobInfo {
 	return &j
 }
 
-func handler(w http.ResponseWriter, _ *http.Request) {
-	log.Print("in handler")
-
-	ctx := context.Context(context.Background())
-
-	ch := make(chan string)
-
-	if available {
-		available = false
-		w.WriteHeader(200)
-		w.Write([]byte("Got the request and am spinning up"))
-
-		go HandleWorkflowJob(ctx, newJob("knative-gitfarm"), ch)
-	} else {
-		w.WriteHeader(503)
-		w.Write([]byte("Server is active, send it somewhere else"))
-	}
-
-}
-
 func main() {
 	flag.Parse()
 	log.Print("gitwebhook sample started.")
+	secretToken := os.Getenv(webhookSecretKey)
 
-	http.HandleFunc(path, handler)
+	hook, _ := github.New(github.Options.Secret(secretToken))
 
+	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		log.Print("in handle")
+
+		HandleWorkflowJob(newJob("knative-gitfarm"))
+		payload, err := hook.Parse(r, github.WorkflowJobEvent, github.ReleaseEvent, github.PullRequestEvent)
+		if err != nil {
+			if err == github.ErrEventNotFound {
+				log.Print("GitHub Event not found.")
+				// ok event wasn;t one of the ones asked to be parsed
+			}
+		}
+		switch payload.(type) {
+
+		case github.WorkflowJobPayload:
+			job := payload.(github.WorkflowJobPayload)
+			log.Print("%+v", job)
+
+		case github.ReleasePayload:
+			release := payload.(github.ReleasePayload)
+			// Do whatever you want from here...
+			log.Print("%+v", release)
+
+		case github.PullRequestPayload:
+			pullRequest := payload.(github.PullRequestPayload)
+			// Do whatever you want from here...
+			log.Print("%+v", pullRequest)
+		}
+	})
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("Cannot open port")

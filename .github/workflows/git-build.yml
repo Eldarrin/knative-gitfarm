@@ -1,4 +1,4 @@
-name: Docker Git Image Build
+name: Git Runner Image Build
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
   ci-runner:
     strategy:
       matrix:
-        runner-name:  ["docker"]
+        runner-name:  ["main"]
 
     runs-on: ubuntu-latest
 

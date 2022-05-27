@@ -14,13 +14,16 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: git-main
+  name: gitwebhook
   namespace: default
 spec:
   template:
     spec:
       containers:
-      - image: docker.io/eldarrin/git-main:latest
+      - # Replace {DOCKER_HUB_USERNAME} with your actual docker hub username
+        image: docker.io/eldarrin/gitwebhook-go:latest
+        ports:
+          - containerPort: 8080
         env:
         - name: GITHUB_PERSONAL_TOKEN
           valueFrom:

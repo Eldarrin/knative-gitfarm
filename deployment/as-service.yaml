@@ -19,6 +19,15 @@ metadata:
 spec:
   template:
     spec:
+      metadata:
+        annotations:
+          # Knative concurrency-based autoscaling (default).
+          autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+          autoscaling.knative.dev/metric: concurrency
+          # Target 10 requests in-flight per pod.
+          autoscaling.knative.dev/target: "1"
+          # Limit scaling to 100 pods.
+          autoscaling.knative.dev/max-scale: "100"
       containers:
       - image: docker.io/eldarrin/git-main:latest
         env:

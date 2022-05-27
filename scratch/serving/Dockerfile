@@ -11,24 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  name: git-main
-  namespace: default
-spec:
-  template:
-    spec:
-      containers:
-      - image: docker.io/eldarrin/git-main:latest
-        env:
-        - name: GITHUB_PERSONAL_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: githubsecret
-              key: personalAccessToken
-        - name: WEBHOOK_SECRET
-          valueFrom:
-              secretKeyRef:
-                name: githubsecret
-                key: webhookSecret
+
+FROM golang AS builder
+
+# copy the source
+ADD .   /go/src/github.com/knative/docs/code-samples/serving/gitwebhook-go
+WORKDIR /go/src/github.com/knative/docs/code-samples/serving/gitwebhook-go
+
+# install dependencies
+RUN	github.com/go-playground/webhooks/v6
+RUN	github.com/google/go-github/v45
+RUN	golang.org/x/oauth2
+
+# build the sample
+RUN CGO_ENABLED=0 go build -o /go/bin/webhook-sample .
+
+FROM golang:alpine
+
+EXPOSE 8080
+COPY --from=builder /go/bin/webhook-sample /app/webhook-sample
+
+ENTRYPOINT ["/app/webhook-sample"]
