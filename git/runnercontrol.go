@@ -141,10 +141,11 @@ func handler(w http.ResponseWriter, _ *http.Request) {
 
 	if available {
 		available = false
-		w.WriteHeader(200)
-		w.Write([]byte("Got the request and am spinning up"))
+		// block this call so knative thinks its processing
+		//w.WriteHeader(200)
+		//w.Write([]byte("Got the request and am spinning up"))
 
-		go HandleWorkflowJob(ctx, newJob("knative-gitfarm"), ch)
+		HandleWorkflowJob(ctx, newJob("knative-gitfarm"), ch)
 	} else {
 		w.WriteHeader(503)
 		w.Write([]byte("Server is active, send it somewhere else"))
