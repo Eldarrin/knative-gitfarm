@@ -3,6 +3,7 @@ name: Test Runner
 on:
   push:
     branches: [ develop ]
+  workflow_dispatch:
 
 env:
   TAG: "latest"
