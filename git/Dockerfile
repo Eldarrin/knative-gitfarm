@@ -1,4 +1,4 @@
-FROM eldarrin/base-docker:latest
+FROM registry.access.redhat.com/ubi8/ubi:8.6-754
 
 ARG RUNNER_VERSION=2.291.1
 ARG DUMB_INIT_VERSION=1.2.5
@@ -11,6 +11,18 @@ ENV RUNNER_TOOL_CACHE=/opt/hostedtoolcache
 WORKDIR /runner
 
 RUN dnf install -y golang \
+    git \
+    java-1.8.0-openjdk-devel \
+    libicu \
+    nmap-ncat \
+    zip \
+    unzip \
+    jq \
+    tar \
+    sudo \
+    procps-ng \
+    make && \
+    dnf clean all \
     && mkdir -p "$RUNNER_ASSETS_DIR" \
     && cd "$RUNNER_ASSETS_DIR" \
     && curl -f -L -o runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
