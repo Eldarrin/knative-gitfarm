@@ -14,6 +14,8 @@ import (
 
 const (
 	path = "/jobs"
+	health = "/health"
+	ready = "/ready"
 	// Secret given to github. Used for verifying the incoming objects.
 	personalAccessTokenKey = "GITHUB_PERSONAL_TOKEN"
 	// Personal Access Token created in github that allows us to make
@@ -150,11 +152,28 @@ func handler(w http.ResponseWriter, _ *http.Request) {
 
 }
 
+func healthHandler(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(200)
+	w.Write([]byte("OK")
+}
+
+func readyHandler(w http.ResponseWriter, _ *http.Request) {
+	if available {
+		w.WriteHeader(200)
+		w.Write([]byte("OK")
+	} else {
+		w.WriteHeader(503)
+		w.Write([]byte("KO"))
+	}
+}
+
 func main() {
 	flag.Parse()
-	log.Print("gitwebhook sample started.")
+	log.Print("gitrunner started.")
 
 	http.HandleFunc(path, handler)
+	http.HandleFunc(health, healthHandler)
+	http.HandleFunc(ready, readyHandler)
 
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

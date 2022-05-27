@@ -9,7 +9,7 @@ dnf install \
     --nodocs -y \
     golang \
     git \
-    java-1.8.0-openjdk-devel \
+    java-1.17.0-openjdk \
     libicu \
     nmap-ncat \
     zip \
@@ -22,15 +22,17 @@ dnf install \
     lttng-ust \
     userspace-rcu
 dnf clean all --installroot $micromount
-buildah umount $microcontainer
+
+mkdir $micromount/runner
 
 mkdir tmp
 cd tmp
 curl -f -L -o runner.tar.gz https://github.com/actions/runner/releases/download/v2.291.1/actions-runner-linux-x64-2.291.1.tar.gz
 tar xzf ./runner.tar.gz
 rm runner.tar.gz
+cp -r * $micromount/runner/
 buildah config --workingdir /runner $microcontainer
-buildah copy $microcontainer ./ /runner/
+cd ..
     
 buildah run $microcontainer adduser runner
 buildah run $microcontainer mkdir /opt/hostedtoolcache
@@ -50,7 +52,7 @@ buildah run $microcontainer CGO_ENABLED=0 go build -o webhook .
 
 buildah config --entrypoint /runner/webhook $microcontainer
 
-buildah unmount $microcontainer
+buildah umount $microcontainer
 
 buildah commit $microcontainer git-main
 
