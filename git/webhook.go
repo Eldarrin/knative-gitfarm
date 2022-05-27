@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/go-playground/webhooks/v6/github"
 	ghclient "github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
 	"log"
@@ -11,10 +10,11 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 const (
-	path = "/webhooks"
+	path = "/jobs"
 	// Secret given to github. Used for verifying the incoming objects.
 	personalAccessTokenKey = "GITHUB_PERSONAL_TOKEN"
 	// Personal Access Token created in github that allows us to make
@@ -32,7 +32,7 @@ type JobInfo struct {
 	Owner       string `json:"owner"`
 }
 
-func HandleWorkflowJob(jobInfo *JobInfo) {
+func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) {
 	log.Print("Handling Workflow Job")
 
 	githubUrl := "https://github.com/" + jobInfo.Owner + "/" + jobInfo.Name
@@ -66,7 +66,6 @@ func HandleWorkflowJob(jobInfo *JobInfo) {
 		log.Fatal("Unauthorized: No token present")
 	}
 
-	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: personalAccessToken})
 	tc := oauth2.NewClient(ctx, ts)
 	client := ghclient.NewClient(tc)
@@ -79,8 +78,17 @@ func HandleWorkflowJob(jobInfo *JobInfo) {
 	runnerTokenValue := *runnerToken.Token
 
 	cmdConfig := &exec.Cmd{
-		Path:   configApp,
-		Args:   []string{configApp, "--unattended", "--replace", "--name", runnerName, "--url", githubUrl, "--token", runnerTokenValue, "--labels", labels, "--work", workDir, "--ephemeral", "--disableupdate"},
+		Path: configApp,
+		Args: []string{configApp,
+			"--unattended",
+			"--replace",
+			"--name", runnerName,
+			"--url", githubUrl,
+			"--token", runnerTokenValue,
+			"--labels", labels,
+			"--work", workDir,
+			"--ephemeral",
+			"--disableupdate"},
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
@@ -90,32 +98,22 @@ func HandleWorkflowJob(jobInfo *JobInfo) {
 	if err := cmdConfig.Run(); err != nil {
 		log.Print(err)
 	}
-	/*
-		cmd := exec.Command(configApp, "--unattended", "--replace", runnerName, githubUrl, runnerTokenValue, runnerGroup, labels, workDir, "--ephemeral", "--disableupdate")
 
-		stdout, err := cmd.Output()
-		log.Print(string(stdout))
-
-		if err != nil {
-			log.Print("in error config")
-			log.Print(err.Error())
-			return
-		}
-
-		log.Print(string(stdout))
-	*/
-	cmdRun := exec.Command(workDir + "/run.sh")
-
-	stdout, err := cmdRun.Output()
-
-	if err != nil {
-		log.Print("in error run")
-		log.Print(err.Error())
-		return
+	cmdRun := &exec.Cmd{
+		Path:   workDir + "/run.sh",
+		Args:   []string{workDir + "/run.sh"},
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
 	}
 
-	log.Print(string(stdout))
+	log.Print(cmdRun.String())
 
+	if err := cmdRun.Run(); err != nil {
+		log.Print(err)
+	}
+
+	log.Print("my process finished")
+	close(ch)
 }
 
 func newJob(name string) *JobInfo {
@@ -128,41 +126,39 @@ func newJob(name string) *JobInfo {
 	return &j
 }
 
+func handler(w http.ResponseWriter, _ *http.Request) {
+	log.Print("in handler")
+	notifier, ok := w.(http.CloseNotifier)
+	if !ok {
+		panic("Expected http.ResponseWriter to be an http.CloseNotifier")
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	ch := make(chan string)
+
+	go HandleWorkflowJob(ctx, newJob("knative-gitfarm"), ch)
+
+	select {
+	case result := <-ch:
+		log.Print(w, result)
+		cancel()
+		return
+	case <-time.After(time.Second * 10):
+		log.Print(w, "Server is busy.")
+	case <-notifier.CloseNotify():
+		log.Print("Client has disconnected.")
+	}
+	cancel()
+	<-ch
+}
+
 func main() {
 	flag.Parse()
 	log.Print("gitwebhook sample started.")
-	secretToken := os.Getenv(webhookSecretKey)
 
-	hook, _ := github.New(github.Options.Secret(secretToken))
+	http.HandleFunc(path, handler)
 
-	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		log.Print("in handle")
-
-		HandleWorkflowJob(newJob("knative-gitfarm"))
-		payload, err := hook.Parse(r, github.WorkflowJobEvent, github.ReleaseEvent, github.PullRequestEvent)
-		if err != nil {
-			if err == github.ErrEventNotFound {
-				log.Print("GitHub Event not found.")
-				// ok event wasn;t one of the ones asked to be parsed
-			}
-		}
-		switch payload.(type) {
-
-		case github.WorkflowJobPayload:
-			job := payload.(github.WorkflowJobPayload)
-			log.Print("%+v", job)
-
-		case github.ReleasePayload:
-			release := payload.(github.ReleasePayload)
-			// Do whatever you want from here...
-			log.Print("%+v", release)
-
-		case github.PullRequestPayload:
-			pullRequest := payload.(github.PullRequestPayload)
-			// Do whatever you want from here...
-			log.Print("%+v", pullRequest)
-		}
-	})
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("Cannot open port")
