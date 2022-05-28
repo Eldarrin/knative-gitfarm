@@ -155,13 +155,13 @@ func handler(w http.ResponseWriter, _ *http.Request) {
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(200)
-	w.Write([]byte("OK")
+	w.Write([]byte("OK"))
 }
 
 func readyHandler(w http.ResponseWriter, _ *http.Request) {
 	if available {
 		w.WriteHeader(200)
-		w.Write([]byte("OK")
+		w.Write([]byte("OK"))
 	} else {
 		w.WriteHeader(503)
 		w.Write([]byte("KO"))
