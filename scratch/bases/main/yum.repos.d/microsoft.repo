@@ -1,0 +1,5 @@
+[packages-microsoft-com-prod]
+name=packages-microsoft-com-prod
+baseurl=https://packages.microsoft.com/rhel/8/prod/
+enabled=1
+gpgcheck=0
