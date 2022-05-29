@@ -1,1 +1,64 @@
-stuff
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Build Farm Jobs Spec
+  license:
+    name: MIT
+servers:
+  - url: http://knative-gitfarm/jobs
+paths:
+  /jobs:
+    post:
+      summary: Spawn a Job Agent
+      operationId: spawnJobAgent
+      tags:
+        - jobs
+      responses:
+        '201':
+          description: Null response
+        '503':
+          description: Agent Busy 
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Job:
+      type: object
+      required:
+        - id
+        - name
+        - calling_url
+        - labels
+        - repo_name
+        - owner
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        calling_url:
+          type: string
+        labels:
+          type: string
+        repo_name:
+          type: string
+        runner_group:
+          type: string
+        owner:
+          type: string    
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
