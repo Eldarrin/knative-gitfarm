@@ -24,13 +24,14 @@ const (
 )
 
 type JobInfo struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	CallingURL  string `json:"calling_url"`
-	Labels      string `json:"labels"`
-	RepoName    string `json:"repo_name"`
-	RunnerGroup string `json:"runner_group"`
-	Owner       string `json:"owner"`
+	ID          		int    `json:"id"`
+	Name        		string `json:"name"`
+	CallingURL  		string `json:"calling_url"`
+	Labels      		string `json:"labels"`
+	RepoName    		string `json:"repo_name"`
+	RunnerGroup 		string `json:"runner_group"`
+	Owner       		string `json:"owner"`
+	Organization		string `json:"organization"`
 }
 
 var available = true
@@ -46,13 +47,10 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 		githubUrl = "this will break"
 	}
 
-	// do organisatino stuff
-	//if payload.Organization != (github.WorkflowJobPayload{}.Organization) {
-	//	organization := payload.Organization.Login
-	//}
-
-	// do runner groups stuff
-	//runnerGroup := jobInfo.RunnerGroup
+	// do organisation stuff
+	if jobInfo.Organization {
+		githubUrl = "https://github.com/" + jobInfo.Organization + "/" + jobInfo.Name
+	}
 
 	// clear and mash up labels
 	// strip non-essentials
@@ -64,7 +62,6 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 
 	configApp := workDir + "/config.sh"
 
-	flag.Parse()
 	personalAccessToken := os.Getenv(personalAccessTokenKey)
 	if personalAccessToken == "" {
 		log.Fatal("Unauthorized: No token present")
@@ -80,10 +77,8 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 	}
 
 	runnerTokenValue := *runnerToken.Token
-
-	cmdConfig := &exec.Cmd{
-		Path: configApp,
-		Args: []string{configApp,
+	
+	args :=  []string{configApp,
 			"--unattended",
 			"--replace",
 			"--name", runnerName,
@@ -92,7 +87,15 @@ func HandleWorkflowJob(ctx context.Context, jobInfo *JobInfo, ch chan<- string) 
 			"--labels", labels,
 			"--work", workDir,
 			"--ephemeral",
-			"--disableupdate"},
+			"--disableupdate"}
+			
+	if jobInfo.RunnerGroup {
+		runnerGroup := jobInfo.RunnerGroup
+	}
+
+	cmdConfig := &exec.Cmd{
+		Path: configApp,
+		Args: args,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
 	}
