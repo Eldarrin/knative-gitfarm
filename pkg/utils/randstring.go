@@ -1,11 +1,11 @@
-package runnercontrol
-
-//thanks calhoun.io for snippet
+package randstring
 
 import (
 	"math/rand"
 	"time"
 )
+
+//thanks calhoun.io for snippet
 
 const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 

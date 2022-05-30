@@ -3,7 +3,6 @@ module eldarrin/knative-gitfarm
 go 1.17
 
 require (
-	github.com/go-playground/webhooks/v6 v6.0.1
 	github.com/google/go-github/v45 v45.0.0
 	golang.org/x/oauth2 v0.0.0-20220524215830-622c5d57e401
 )

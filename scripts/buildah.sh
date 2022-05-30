@@ -11,7 +11,6 @@ dnf install \
     golang \
     git \
     java-17-openjdk \
-    libicu \
     nmap-ncat \
     zip \
     unzip \
@@ -21,7 +20,10 @@ dnf install \
     procps-ng \
     make \
     lttng-ust \
-    userspace-rcu --nogpgcheck
+    openssl-libs \
+    krb5-libs \
+    zlib \
+    libicu --nogpgcheck
 dnf clean all --installroot $micromount
 
 mkdir $micromount/runner
