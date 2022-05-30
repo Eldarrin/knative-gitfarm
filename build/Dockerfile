@@ -11,7 +11,6 @@ WORKDIR /runner
 
 RUN dnf install -y golang \
     git \
-    java-1.8.0-openjdk-devel \
     libicu \
     nmap-ncat \
     zip \
@@ -19,7 +18,6 @@ RUN dnf install -y golang \
     jq \
     tar \
     sudo \
-    procps-ng \
     make && \
     dnf clean all \
     && curl -f -L -o runner.tar.gz https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
