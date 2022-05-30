@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/eldarrin/knative-gitfarm/pkg/utils"
 	ghClient "github.com/google/go-github/v45/github"
 	"golang.org/x/oauth2"
 	"log"
