@@ -44,19 +44,21 @@ func getRunnerToken(ctx context.Context, jobInfo *JobInfo) string {
 	tc := oauth2.NewClient(ctx, ts)
 	client := ghClient.NewClient(tc)
 
-	runnerToken, _, err := client.Actions.CreateRegistrationToken(ctx, jobInfo.Owner, jobInfo.RepoName)
-	if err != nil {
-		log.Fatal(err)
-	}
+	runnerTokenValue := ""
 
 	if jobInfo.Organization != "" {
-		runnerToken, _, err = client.Actions.CreateOrganizationRegistrationToken(ctx, jobInfo.Organization)
+		runnerToken, _, err := client.Actions.CreateOrganizationRegistrationToken(ctx, jobInfo.Organization)
 		if err != nil {
 			log.Fatal(err)
 		}
+		runnerTokenValue = *runnerToken.Token
+	} else {
+		runnerToken, _, err := client.Actions.CreateRegistrationToken(ctx, jobInfo.Owner, jobInfo.RepoName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		runnerTokenValue = *runnerToken.Token
 	}
-
-	runnerTokenValue := *runnerToken.Token
 
 	return runnerTokenValue
 }
