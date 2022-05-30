@@ -1,4 +1,2 @@
 .idea/
-serving/github-secret.yaml
-serving/go.sum
-serving/gitwebhook
+scripts/tmp

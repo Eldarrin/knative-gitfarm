@@ -1,3 +1,4 @@
+#DEPRECATED FOR BUILDAH
 FROM registry.access.redhat.com/ubi8/ubi:8.6-754
 
 ARG RUNNER_VERSION=2.291.1
