@@ -34,7 +34,7 @@ RUN chown -R runner:runner "$RUNNER_HOME"
 
 USER runner
 
-COPY go.mod go.sum webhook.go rand-strings.go ./
+COPY ../cmd/ ./
 
 RUN	go get github.com/go-playground/webhooks/v6
 RUN	go get github.com/google/go-github/v45
