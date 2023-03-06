@@ -7,16 +7,11 @@ env:
   TAG: "latest"
 
 jobs:
-  ci-runner:
-    strategy:
-      matrix:
-        runner-name:  ["main"]
-
-    runs-on: "main"
+    runs-on: ["self-hosted", "Linux", "x64", "e2etester"]
 
     steps:
       - name: echoer
         run: |
           echo I am a thing
-          chmod +x git/buildah.sh
-          git/buildah.sh
+          sleep 600
+          echo I have finished being a thing
