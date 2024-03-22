@@ -9,6 +9,9 @@ env:
 jobs:
   test:
     runs-on: ["self-hosted"]
+    strategy:
+      matrix:
+        scene: [1, 2]
 
     steps:
       - name: echoer
