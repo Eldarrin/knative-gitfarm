@@ -10,7 +10,7 @@ jobs:
     steps:
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Wait for 60 seconds
-        run: sleep 60
+        run: sleep 600
       - name: Check out repository code
         uses: actions/checkout@v3
       - name: List files in the repository
